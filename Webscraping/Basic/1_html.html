@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>시작</title>
+    <link rel="stylesheet" href="style.css">
+
+</head>
+
+<body>
+    <section id="producer">
+        <span>제작자 :</span>
+        <a href="https://blog.naver.com/rladbtjq18" target="_blank">시작의 블로그</a>
+    </section>
+
+    <section class="m_title">
+        <h1>시작의 닮은 동물상 찾기</h1>
+        <h2>내가 닮은 동물상은?</h2>
+    </section>
+
+
+
+    <script class="jsbin" src="https://ajax.googleapis.com/ajax/libs/jquery/1/jquery.min.js"></script>
+    <div class="file-upload">
+
+        <div class="image-upload-wrap">
+            <input class="file-upload-input" type='file' onchange="readURL(this);" accept="image/*" />
+            <div class="drag-text">
+                <img src="1.png" class="camera_image">
+                <h3>눌러서 얼굴 사진을 업로드 해주세요!</h3>
+            </div>
+        </div>
+
+        <div class="file-upload-content">
+            <img class="file-upload-image" id="face_img" src="#" alt="your image" />
+
+            <div class="result_ment">
+                <p class="result_animal"></p>
+                <p class="result_msg"></p>
+            </div>
+
+            <div class="result_" id="label-container"></div>
+
+            <div class="image-title-wrap">
+                <button type="button" onclick="removeUpload()" class="remove-image">사진 제거하기 </button>
+            </div>
+
+            <button type="button" onclick="result_click()" class="result_button">결과 보기</button>
+
+
+
+
+
+        </div>
+    </div>
+    <div id="webcam-container"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@1.3.1/dist/tf.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/image@0.8/dist/teachablemachine-image.min.js"></script>
+    <script>
+        function readURL(input) {
+            if (input.files && input.files[0]) {
+
+                var reader = new FileReader();
+
+                reader.onload = function (e) {
+                    $('.image-upload-wrap').hide();
+
+                    $('.file-upload-image').attr('src', e.target.result);
+                    $('.file-upload-content').show();
+
+                    $('.image-title').html(input.files[0].name);
+                };
+
+                reader.readAsDataURL(input.files[0]);
+                init().then(() => {
+                    predict()
+                });
+
+            } else {
+                removeUpload();
+            }
+        }
+        function result_click() {
+            $('.result_button').hide();
+            $('.result_ment').show();
+
+        }
+        function removeUpload() {
+            $('.file-upload-input').replaceWith($('.file-upload-input').clone());
+            $('.file-upload-content').hide();
+            $('.image-upload-wrap').show();
+        }
+        $('.image-upload-wrap').bind('dragover', function () {
+            $('.image-upload-wrap').addClass('image-dropping');
+        });
+        $('.image-upload-wrap').bind('dragleave', function () {
+            $('.image-upload-wrap').removeClass('image-dropping');
+        });
+
+    </script>
+    <script type="text/javascript">
+        // More API functions here:
+        // https://github.com/googlecreativelab/teachablemachine-community/tree/master/libraries/image
+
+        // the link to your model provided by Teachable Machine export panel
+        const URL = "https://teachablemachine.withgoogle.com/models/CRIv7MedK/";
+
+        let model, webcam, labelContainer, maxPredictions;
+
+        // Load the image model and setup the webcam
+        async function init() {
+            const modelURL = URL + "model.json";
+            const metadataURL = URL + "metadata.json";
+
+            // load the model and metadata
+            // Refer to tmImage.loadFromFiles() in the API to support files from a file picker
+            // or files from your local hard drive
+            // Note: the pose library adds "tmImage" object to your window (window.tmImage)
+            model = await tmImage.load(modelURL, metadataURL);
+            maxPredictions = model.getTotalClasses();
+
+            labelContainer = document.getElementById("label-container");
+            for (let i = 0; i < maxPredictions; i++) { // and class labels
+                labelContainer.appendChild(document.createElement("div"));
+            }
+        }
+
+
+
+        // run the webcam image through the image model
+        async function predict() {
+            // predict can take in an image, video or canvas html element
+            var image = document.getElementById("face_img")
+            const prediction = await model.predict(image, false);
+
+            prediction.sort((a, b) => parseFloat(b.probability) - parseFloat(a.probability));
+            var result_msg;
+            var result_animal;
+            switch (prediction[0].className) {
+                case "토끼":
+                    result_animal = "토끼상"
+                    result_msg = "똘망똘망한 눈이 특징인 토끼 얼굴은 사랑스러운 분위기를 풍깁니다.\n 감수성이 풍부하고 쉽게 상처 입는성격이며\n연애를 할 때는 전부 다 내어주는 성향을 가집니다.\n그리고 조용하고 같이있으면 안심할 수 있는 상대와 잘 맞습니다."
+                    break;
+                case "고양이":
+                    result_animal = "고양이상"
+                    result_msg = "고양이 상은 입술이 얇고 눈꼬리가 약간 올라간 얼굴형이 많습니다.\n 눈은 찢어진 듯 큰 눈을 가진 경우가 많지요.\n 약간 서구적인 얼굴의 느낌을 많이 줍니다.\n 고양이는 가까워지기 어려운 동물입니다.\n 고양이 상을 가진 사람들도 시키하고 약간 도도한 느낌을 갖게 합니다.\n고양이 상을 가진 남자 연예인으로는 강동원, 이종석, 안재현 등이 있습니다."
+                    break;
+                case "공룡":
+                    result_animal = "공룡상"
+                    result_msg = "공룡은 크고 힘이 센 동물(?)입니다.\n 그래서, 얼굴선이 굵직한 얼굴들이 많습니다.\n 다소 남성미가 있는 얼굴형으로 볼 수 있지요.\n 공룡형의 얼굴상을 가진 대표 연예인으로는 김우빈, 탑, 류준열 등이 있습니다.\n"
+                    break;
+                case "강아지":
+                    result_animal = "강아지상"
+                    result_msg = "귀엽고 눈코입이 동글동글한 얼굴형이 많습니다.\n 눈이 초롱초롱하고 약간 처진 경우가 많지요.\n 강아지는 많은 사람들이 애완용으로 키우는 귀여운 동물입니다.\n 강아지상을 닮은 사람들도 귀엽고 사랑스러운 느낌을 많이 주지요.\n 다정다감하고 친절한 성격을 가질 것으로 예상되네요.\n 순한 이미지의 얼굴들이 많습니다.\n강아지상을 가진 대표 연예인으로 워너원 강다니엘, EXO 백현, 박보검, 송중기 등이 있습니다. "
+                    break;
+                case "곰":
+                    result_animal = "곰상"
+                    result_msg = "곰은 느리고 우직한 이미지를 많이 줍니다.\n 게으른 사람을 보고 곰 같다는 말을 하기도 하지요. (실제 곰은 빠르고 무섭다고 합니다.)곰은 만화나 캐릭터에서 귀여운 이미지를 많이 줍니다.\n 곰의 얼굴형을 가진 사람들도 귀여운 이미지의 사람들이 많습니다."
+                    break;
+                default:
+                    result_animal = "알수없음"
+                    result_msg = "알수없음"
+
+
+            }
+
+            $('.result_msg').html(result_msg);
+            $('.result_animal').html(result_animal);
+
+            for (let i = 0; i < maxPredictions; i++) {
+
+                const classPrediction =
+                    prediction[i].className + " : " + prediction[i].probability.toFixed(2) * 100 + "%";
+
+
+                labelContainer.childNodes[i].innerHTML = classPrediction;
+            }
+        }
+    </script>
+
+</body>
+<!-- Copyright (c) 2021 by Aaron Vanston (https://codepen.io/aaronvanston/pen/yNYOXR)
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE. -->
+
+
+</html>
